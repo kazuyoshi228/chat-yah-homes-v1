@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import ChatWidgetFirebase from "@/components/ChatWidgetFirebase";
 import FacilitySelect from "@/pages/FacilitySelect";
 import { FACILITY_LABELS, pick } from "@/components/widget/labels";
@@ -32,9 +33,13 @@ type State =
 
 export default function FacilityChat({ facilityId }: { facilityId: string }) {
   const { lang } = useLanguage();
+  // 施設マスタの読取はルール上「認証必須」→ 匿名認証の確立を待ってから取得する
+  //（useFirebaseAuth が未ログイン時に匿名サインインを自動実行する）
+  const { user, loading: authLoading } = useFirebaseAuth();
   const [state, setState] = useState<State>({ phase: "loading" });
 
   useEffect(() => {
+    if (authLoading || !user) return; // 認証確立前は loading のまま
     let cancelled = false;
     (async () => {
       try {
@@ -57,7 +62,7 @@ export default function FacilityChat({ facilityId }: { facilityId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [facilityId, lang]);
+  }, [facilityId, lang, authLoading, user]);
 
   if (state.phase === "loading") {
     return (

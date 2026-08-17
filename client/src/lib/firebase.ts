@@ -63,8 +63,8 @@ const googleProvider = new GoogleAuthProvider();
 // Firestore データベース — chat 専用 named DB「chat」
 const db: Firestore = getFirestore(app, "chat");
 
-// 開発モード時はエミュレータに接続
-if (import.meta.env.DEV) {
+// エミュレータ接続は VITE_USE_EMULATOR=1 のときだけ（既定の dev server は本番Firebaseに接続）
+if (import.meta.env.DEV && import.meta.env.VITE_USE_EMULATOR === "1") {
   try {
     connectAuthEmulator(auth, "http://localhost:9099", {
       disableWarnings: true,

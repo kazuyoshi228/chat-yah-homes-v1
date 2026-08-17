@@ -9,6 +9,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { useLocation } from "wouter";
 import { db } from "@/lib/firebase";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { FACILITY_LABELS, pick } from "@/components/widget/labels";
 import { resolveFacilityName } from "@/pages/FacilityChat";
 import { Headphones } from "lucide-react";
@@ -25,9 +26,12 @@ export default function FacilitySelect({
 }) {
   const { lang } = useLanguage();
   const [, navigate] = useLocation();
+  // 施設一覧の読取もルール上「認証必須」→ 匿名認証の確立を待つ
+  const { user, loading: authLoading } = useFirebaseAuth();
   const [facilities, setFacilities] = useState<FacilityRow[] | null>(null);
 
   useEffect(() => {
+    if (authLoading || !user) return;
     let cancelled = false;
     (async () => {
       try {
@@ -49,7 +53,7 @@ export default function FacilitySelect({
     return () => {
       cancelled = true;
     };
-  }, [lang]);
+  }, [lang, authLoading, user]);
 
   return (
     <div className="w-full min-h-[100dvh] bg-white flex flex-col items-center justify-center px-6 py-10">
