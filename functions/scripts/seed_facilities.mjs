@@ -27,10 +27,12 @@ const FACILITIES = [
   {
     id: "kiyokawa",
     data: {
-      name: { ja: "yah.homes 清川", en: "yah.homes Kiyokawa" },
+      // 表札サイン（公式掲示）より確定: docs/rag_sources/kiyokawa_signage.md
+      name: { ja: "yah.kiyokawa", en: "yah.kiyokawa" },
       checkIn: "", // ヒアリング後に設定（例 "16:00"）
       checkOut: "", // ヒアリング後に設定（例 "10:00"）
-      address: "", // ヒアリング後に設定
+      address:
+        "〒810-0005 福岡県福岡市中央区清川3-3-1 / 3-3-1 Kiyokawa, Chuo-ku, Fukuoka 810-0005 Japan",
       mapUrl: "",
       contacts: {
         officialEmail: "", // ヒアリング後に設定
@@ -39,8 +41,9 @@ const FACILITIES = [
         airbnb: "Please contact us via the message feature in the Airbnb app.",
         other: "",
       },
-      emergencyPhone: "", // ヒアリング後に設定
-      notes: "",
+      emergencyPhone: "092-600-3490", // 表札の Emergency Contact（公開掲示値）
+      notes:
+        "3-story building (rooms across 1F-3F). Emergency exit maps are posted on each floor. Wi-Fi details are posted on the acrylic sign in the room (never share credentials in chat).",
       isActive: true,
     },
   },
