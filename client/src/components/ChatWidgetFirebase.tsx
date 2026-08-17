@@ -7,7 +7,7 @@
  *   LoginPanel（ログイン/新規登録） / SurveyView（終了アンケート） / labels（多言語辞書）
  */
 import { useState, useEffect, useCallback } from "react";
-import { Headphones, ChevronLeft, LogIn, LogOut } from "lucide-react";
+import { ChevronLeft, LogIn, LogOut } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { collection, getDocs, addDoc, setDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -210,9 +210,8 @@ export default function ChatWidgetFirebase({
               <ChevronLeft className="w-4 h-4" />
             </button>
           )}
-          <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-            <Headphones className="w-3.5 h-3.5 text-white" />
-          </div>
+          {/* yah.homes ロゴ（Webサイトと共通のマーク・白版） */}
+          <img src="/logo_yah_white.svg" alt="yah.homes" className="w-8 h-8" />
           <div>
             <p className="text-sm font-medium text-white">{facilityName}</p>
             <p className="text-xs text-white/60">

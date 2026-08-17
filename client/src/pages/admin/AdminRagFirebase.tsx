@@ -13,6 +13,10 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, Plus, Pencil, Trash2, BookOpen, Globe, AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -78,6 +82,8 @@ export default function AdminRagFirebase() {
   const [search, setSearch] = useState("");
   const [statusView, setStatusView] = useState<StatusView>("published");
   const [deepLinkDocId, setDeepLinkDocId] = useState<string | null>(null);
+  // 内容ビューア（行クリック → 右からスライドイン）
+  const [viewDoc, setViewDoc] = useState<RagDoc | null>(null);
 
   const ragDocs = docs as unknown as RagDoc[];
 
@@ -310,7 +316,8 @@ export default function AdminRagFirebase() {
             {filtered.map((doc) => (
               <div
                 key={doc.id}
-                className="border rounded-lg p-4 hover:border-black/20 transition-colors"
+                onClick={() => setViewDoc(doc)}
+                className="border rounded-lg p-4 hover:border-black/20 transition-colors cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -338,7 +345,10 @@ export default function AdminRagFirebase() {
                       {doc.content}
                     </p>
                   </div>
-                  <div className="flex gap-1 flex-shrink-0">
+                  <div
+                    className="flex gap-1 flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Button
                       variant="ghost"
                       size="sm"
@@ -380,6 +390,68 @@ export default function AdminRagFirebase() {
             ))}
           </div>
         )}
+
+        {/* 内容ビューア（右スライドイン・スクロール表示） */}
+        <Sheet open={!!viewDoc} onOpenChange={(open) => !open && setViewDoc(null)}>
+          <SheetContent side="right" className="w-full sm:max-w-xl flex flex-col p-0">
+            {viewDoc && (
+              <>
+                <SheetHeader className="px-5 pt-5 pb-3 border-b">
+                  <SheetTitle className="text-base pr-8">{viewDoc.title}</SheetTitle>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                      {viewDoc.facilityId || "common"}
+                    </span>
+                    {viewDoc.category && (
+                      <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                        {viewDoc.category}
+                      </span>
+                    )}
+                    {viewDoc.source === "site_sync" && (
+                      <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">
+                        サイト自動同期
+                      </span>
+                    )}
+                    {viewDoc.isActive === false && (
+                      <span className="text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
+                        承認待ち
+                      </span>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {viewDoc.content.length.toLocaleString()}字
+                    </span>
+                  </div>
+                </SheetHeader>
+                <ScrollArea className="flex-1 min-h-0">
+                  <pre className="px-5 py-4 text-xs whitespace-pre-wrap break-words font-mono leading-relaxed">
+                    {viewDoc.content}
+                  </pre>
+                </ScrollArea>
+                <div className="px-5 py-3 border-t flex gap-2">
+                  <Button
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      openEdit(viewDoc);
+                      setViewDoc(null);
+                    }}
+                  >
+                    <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                    編集
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setViewDoc(null)}
+                  >
+                    閉じる
+                  </Button>
+                </div>
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
 
         {/* 作成/編集ダイアログ */}
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

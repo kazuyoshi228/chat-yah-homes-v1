@@ -12,7 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { FACILITY_LABELS, pick } from "@/components/widget/labels";
 import { resolveFacilityName } from "@/pages/FacilityChat";
-import { Headphones } from "lucide-react";
+
 
 interface FacilityRow {
   id: string;
@@ -59,9 +59,7 @@ export default function FacilitySelect({
     <div className="w-full min-h-[100dvh] bg-white flex flex-col items-center justify-center px-6 py-10">
       <div className="w-full max-w-sm flex flex-col items-center gap-6">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-full bg-black flex items-center justify-center">
-            <Headphones className="w-4 h-4 text-white" />
-          </div>
+          <img src="/logo_yah.svg" alt="yah.homes" className="w-10 h-10" />
           <div>
             <p className="text-base font-semibold">yah.homes</p>
             <p className="text-xs text-gray-500">24/7 AI chat support</p>
