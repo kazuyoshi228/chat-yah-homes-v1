@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Headphones, ChevronLeft, LogIn, LogOut } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { collection, getDocs, setDoc, doc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, addDoc, setDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { parseI18n } from "@/lib/i18nJson";
 
@@ -112,15 +112,23 @@ export default function ChatWidgetFirebase({
   };
 
   // ── AIチャットセッション開始 ──
+  //   分岐で選んだ意図を「最初の訪問者メッセージ」として自動送信する。
+  //   これが onVisitorMessageCreated を発火させ、AIが即座に最初の応答を返す
+  //   （送らないと入力があるまで無反応＝分岐を押しても何も起きないように見える）。
   const handleStartAiChat = useCallback(
     async (greeting: string) => {
       if (!user || sessionCreating) return;
       try {
-        await createSession({
+        const sid = await createSession({
           visitorId: user.uid,
           language,
           facilityId,
           initialMessage: greeting || "Hello",
+        });
+        await addDoc(collection(db, "chat_sessions", sid, "chat_messages"), {
+          role: "visitor",
+          content: greeting || "Hello",
+          createdAt: serverTimestamp(),
         });
         setWidgetState("chat");
       } catch (error) {
