@@ -14,8 +14,27 @@ import * as crypto from "crypto";
 import { chatDb } from "../db";
 import { REGION } from "../config";
 
-/** Embedding入力上限(8000)手前に収める本文キャップ */
-const CONTENT_CAP = 7500;
+/** 1チャンクの本文上限（Embedding入力上限8000の手前）。長いページは複数文書に分割 */
+const CHUNK_SIZE = 7000;
+/** 分割上限（暴走防止） */
+const MAX_CHUNKS = 4;
+
+/** 改行境界を優先して CHUNK_SIZE ごとに分割 */
+export function chunkText(text: string): string[] {
+  const chunks: string[] = [];
+  let rest = text;
+  while (rest.length > 0 && chunks.length < MAX_CHUNKS) {
+    if (rest.length <= CHUNK_SIZE) {
+      chunks.push(rest);
+      break;
+    }
+    let cut = rest.lastIndexOf("\n", CHUNK_SIZE);
+    if (cut < CHUNK_SIZE * 0.5) cut = CHUNK_SIZE; // 改行が無ければ強制カット
+    chunks.push(rest.slice(0, cut));
+    rest = rest.slice(cut);
+  }
+  return chunks;
+}
 
 /** HTMLから本文テキストを抽出（素朴・依存ゼロ） */
 export function extractText(htmlStr: string): string {
@@ -53,34 +72,46 @@ export async function syncOneSource(
       headers: { "User-Agent": "yah-homes-chat-sync/1.0" },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = extractText(await res.text()).slice(0, CONTENT_CAP);
+    const text = extractText(await res.text());
     if (text.length < 200) throw new Error("本文が短すぎる（抽出失敗の疑い）");
 
+    // 全文ハッシュで変更検知（チャンク割りの前に判定）
     const hash = crypto.createHash("sha256").update(text).digest("hex");
-    const docRef = chatDb.collection("chat_rag_documents").doc(`site-${id}`);
-    const existing = await docRef.get();
+    const headRef = chatDb.collection("chat_rag_documents").doc(`site-${id}`);
+    const existing = await headRef.get();
     if (existing.exists && existing.data()?.contentHash === hash) {
       return "unchanged";
     }
 
-    await docRef.set(
-      {
-        title: src.title ?? `Site sync: ${src.url}`,
-        content: `[Auto-synced from ${src.url} — the live site is the source of truth]\n\n${text}`,
-        category: src.category ?? "site",
-        facilityId: src.facilityId ?? "common",
-        isActive: true,
-        source: "site_sync",
-        sourceUrl: src.url,
-        contentHash: hash,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        createdAt: existing.exists
-          ? existing.data()?.createdAt ?? admin.firestore.FieldValue.serverTimestamp()
-          : admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
-    console.log(`site_sync 更新: ${id} (${text.length}字)`);
+    const chunks = chunkText(text);
+    const col = chatDb.collection("chat_rag_documents");
+    for (let i = 0; i < chunks.length; i++) {
+      // 先頭チャンクは site-{id}（後方互換）、以降は site-{id}-p2, p3...
+      const docId = i === 0 ? `site-${id}` : `site-${id}-p${i + 1}`;
+      const part = chunks.length > 1 ? ` (part ${i + 1}/${chunks.length})` : "";
+      await col.doc(docId).set(
+        {
+          title: `${src.title ?? `Site sync: ${src.url}`}${part}`,
+          content: `[Auto-synced from ${src.url} — the live site is the source of truth${part}]\n\n${chunks[i]}`,
+          category: src.category ?? "site",
+          facilityId: src.facilityId ?? "common",
+          isActive: true,
+          source: "site_sync",
+          sourceUrl: src.url,
+          contentHash: i === 0 ? hash : null, // 変更検知は先頭チャンクのみ
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+    // ページが縮んだ場合の余剰チャンク掃除
+    for (let i = chunks.length; i < MAX_CHUNKS; i++) {
+      const stale = col.doc(`site-${id}-p${i + 1}`);
+      const s = await stale.get();
+      if (s.exists) await stale.delete();
+    }
+    console.log(`site_sync 更新: ${id} (${text.length}字 → ${chunks.length}チャンク)`);
     return "updated";
   } catch (e) {
     console.error(`site_sync 失敗: ${id} (${src.url}):`, e);
