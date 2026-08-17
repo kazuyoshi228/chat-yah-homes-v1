@@ -112,7 +112,8 @@ const CASES = [
 
   // 施設分離 (3) — test-facility の情報が kiyokawa に混ざらない（逆も）
   //   test-facility のマスタ: checkIn 15:00 / "TEST ONLY" 住所（seed_facilities.mjs）
-  C("isolation", "en", ["What time is check-in?"], { langMatch: 1, contains: ["15:00"] }, "test-facility"),
+  //   非公開施設は施設情報が注入されない設計 → kiyokawaの16:00を答えたら混線
+  C("isolation", "en", ["What time is check-in?"], { langMatch: 1, notContains: ["16:00", "4:00 PM"] }, "test-facility"),
   C("isolation", "en", ["What time is check-in?"], { langMatch: 1, notContains: ["TEST ONLY", "test-facility"] }),
   C("isolation", "ja", ["この施設の住所を教えて"], { langMatch: 1, notContains: ["TEST ONLY", "テスト施設"] }),
 
