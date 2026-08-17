@@ -20,5 +20,6 @@ export { dataRetentionPurge } from "./scheduled/dataRetention";
 export { generateRagDrafts } from "./scheduled/generateRagDrafts";
 export { syncSiteSources } from "./scheduled/syncSiteSources"; // 公開サイト→RAG自動同期（SSoT）
 
-// ── Callable 関数 (1関数) ──
+// ── Callable 関数 (3関数) ──
 export { claimSession } from "./callables/claimSession";
+export { uploadChatPhoto, deleteChatPhoto } from "./callables/chatPhotos"; // 管理者限定・チャット用写真

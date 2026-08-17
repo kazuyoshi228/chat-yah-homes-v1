@@ -264,6 +264,23 @@ describe("chat_facilities（施設マスタ）", () => {
   });
 });
 
+describe("chat_photos（チャット用写真メタデータ）", () => {
+  it("管理者は写真メタデータを読める", async () => {
+    const db = googleAdmin("kazuyoshi@bonfire.co.jp");
+    await assertSucceeds(getDoc(doc(db, "chat_photos/x")));
+  });
+
+  it("匿名（訪問者）は写真メタデータを読めない", async () => {
+    const db = anon("u1");
+    await assertFails(getDoc(doc(db, "chat_photos/x")));
+  });
+
+  it("管理者でもクライアントから直接は書けない（callable経由のみ）", async () => {
+    const db = googleAdmin("kazuyoshi@bonfire.co.jp");
+    await assertFails(setDoc(doc(db, "chat_photos/x"), { label: "test" }));
+  });
+});
+
 describe("default deny", () => {
   it("未定義コレクションには書けない", async () => {
     const db = anon("u1");

@@ -138,6 +138,14 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // ── チャット用写真メタデータ ──
+    //   書き込みは管理者限定 callable（uploadChatPhoto/deleteChatPhoto・Admin SDK）経由のみ。
+    //   訪問者は読まない（メッセージにURLが載る）。管理画面の一覧表示用に admin read のみ。
+    match /chat_photos/{id} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // ── ホスピタリティ基準 ──
     match /chat_hospitality_guidelines/{id} {
       allow read, write: if isAdmin();

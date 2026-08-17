@@ -25,6 +25,8 @@ export interface ChatMessage {
   resolved?: boolean;
   /** 人間の連絡窓口（予約経路別）へ誘導した回答か。AIが設定 */
   directToContact?: boolean;
+  /** 回答に添付する写真URL（登録済み写真のみ・サーバ側でホワイトリスト済み） */
+  photoUrls?: string[];
   createdAt: Date | Timestamp | null;
 }
 
@@ -72,6 +74,7 @@ export function useChatMessages(
           content: doc.data().content,
           resolved: doc.data().resolved,
           directToContact: doc.data().directToContact,
+          photoUrls: doc.data().photoUrls ?? [],
           createdAt: doc.data().createdAt,
         }));
         setMessages(msgs);

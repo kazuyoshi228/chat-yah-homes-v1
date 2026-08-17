@@ -57,6 +57,12 @@ const responseSchema = {
       description:
         "人間の連絡窓口（予約経路のメッセージ・施設連絡先）へ誘導したか（予約変更/返金の実行希望・人間対応の希望・本人確認が必要・緊急時・解決不能など）。",
     },
+    photoUrls: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description:
+        "回答に添付する写真URL（最大2枚）。【施設情報】の Available photos に列挙されたURLのみ使用可。関連する写真が無ければ空配列。本文にはURLを書かない（画面がカード表示する）。",
+    },
   },
   required: [
     "answer",
@@ -64,6 +70,7 @@ const responseSchema = {
     "escalationReason",
     "language",
     "directToContact",
+    "photoUrls",
   ],
 };
 
@@ -73,6 +80,7 @@ export interface AIResponse {
   escalationReason: string;
   language: string;
   directToContact: boolean;
+  photoUrls: string[];
 }
 
 /** カテゴリの表示名（プロンプト内の見出し） */
@@ -246,6 +254,7 @@ export async function generateAIResponse(params: {
       escalationReason: "",
       language: params.visitorLanguage,
       directToContact: false,
+      photoUrls: [],
     };
   }
 }

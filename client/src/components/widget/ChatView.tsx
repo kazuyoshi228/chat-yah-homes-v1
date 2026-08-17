@@ -72,17 +72,37 @@ export function ChatView({ messages, typing, onSend, onEndSession }: ChatViewPro
                     )}
                   </div>
                 )}
-                <div
-                  className={cn(
-                    "max-w-[80%] rounded-xl px-3 py-2 text-xs",
-                    isVisitor
-                      ? "bg-black text-white rounded-br-sm"
-                      : "bg-gray-100 text-gray-800 rounded-bl-sm"
-                  )}
-                >
-                  <p className="whitespace-pre-wrap leading-relaxed">
-                    {msg.content}
-                  </p>
+                <div className="max-w-[80%] space-y-1.5">
+                  <div
+                    className={cn(
+                      "rounded-xl px-3 py-2 text-xs",
+                      isVisitor
+                        ? "bg-black text-white rounded-br-sm"
+                        : "bg-gray-100 text-gray-800 rounded-bl-sm"
+                    )}
+                  >
+                    <p className="whitespace-pre-wrap leading-relaxed">
+                      {msg.content}
+                    </p>
+                  </div>
+                  {/* 写真カード（AIが添付・サーバ側で登録済み写真にホワイトリスト済み） */}
+                  {(msg.photoUrls?.length ?? 0) > 0 &&
+                    msg.photoUrls!.map((url) => (
+                      <a
+                        key={url}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={url}
+                          alt=""
+                          loading="lazy"
+                          className="rounded-xl border border-gray-200 max-w-full max-h-56 object-cover"
+                        />
+                      </a>
+                    ))}
                 </div>
               </div>
             );

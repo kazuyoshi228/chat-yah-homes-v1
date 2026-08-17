@@ -57,6 +57,35 @@ function fmtName(name: FacilityDoc["name"]): string {
  * 施設が存在しない/非公開なら空文字（プロンプト側で「施設不明」挙動になる）。
  * 参照情報のラベルは英語（回答言語への引きずられ防止・customerContext と同方針）。
  */
+/** 施設の写真リスト（chat_photos・AIが添付してよいもの）。5分キャッシュ */
+const photoCache = new Map<string, { list: { label: string; url: string }[]; at: number }>();
+
+export async function getFacilityPhotos(
+  facilityId: string
+): Promise<{ label: string; url: string }[]> {
+  const key = facilityId || "common";
+  const hit = photoCache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.list;
+  try {
+    const scope = facilityId ? [facilityId, "common"] : ["common"];
+    const snap = await chatDb
+      .collection("chat_photos")
+      .where("facilityId", "in", scope)
+      .get();
+    const list = snap.docs
+      .map((d) => ({
+        label: String(d.data().label ?? ""),
+        url: String(d.data().url ?? ""),
+      }))
+      .filter((p) => p.label && p.url);
+    photoCache.set(key, { list, at: Date.now() });
+    return list;
+  } catch (e) {
+    console.error("facilityPhotos 取得エラー:", e);
+    return photoCache.get(key)?.list ?? [];
+  }
+}
+
 export async function getFacilityContext(facilityId: string): Promise<string> {
   if (!facilityId) return "";
   const hit = cache.get(facilityId);

@@ -28,7 +28,7 @@ import {
   AIResponse,
 } from "../utils/ai";
 import { checkBurstRateLimit, checkDailyRateLimit } from "../utils/rateLimits";
-import { getFacilityContext } from "../utils/facilityContext";
+import { getFacilityContext, getFacilityPhotos } from "../utils/facilityContext";
 import { getPropertyFacts } from "../utils/propertyFacts";
 import { classifyFailure } from "../utils/classifyFailure";
 import { REGION, MAX_MESSAGES_PER_SESSION } from "../config";
@@ -108,16 +108,26 @@ export const onVisitorMessageCreated = onDocumentCreated(
       const ragResults = await searchRAG(data.content, facilityId);
       const ragContext = ragResults.map((r) => r.content).join("\n\n---\n\n");
 
-      // ── Step 2.5: 施設情報の正本を取得（両方とも5分キャッシュ） ──
+      // ── Step 2.5: 施設情報の正本を取得（各5分キャッシュ） ──
       //   chat_facilities（窓口・Wi-Fi・チャット用メモ）＋
-      //   (default)/property_facts（admin/properties の施設事実・read-only）
-      const [facilityMaster, propertyFacts] = await Promise.all([
+      //   (default)/property_facts（admin/properties の施設事実・read-only）＋
+      //   chat_photos（AIが添付してよい写真リスト）
+      const [facilityMaster, propertyFacts, photoList] = await Promise.all([
         getFacilityContext(facilityId),
         getPropertyFacts(facilityId),
+        getFacilityPhotos(facilityId),
       ]);
-      const facilityContext = [facilityMaster, propertyFacts]
+      const photosBlock =
+        photoList.length > 0
+          ? `[Available photos — attach via photoUrls when relevant (max 2). Do not write these URLs in the answer text.]\n${photoList
+              .map((p) => `- ${p.label}: ${p.url}`)
+              .join("\n")}`
+          : "";
+      const facilityContext = [facilityMaster, propertyFacts, photosBlock]
         .filter(Boolean)
         .join("\n");
+      // AIが返してよい写真URLのホワイトリスト（創作URLの排除に使用）
+      const allowedPhotoUrls = new Set(photoList.map((p) => p.url));
 
       // ── Step 3: 冒頭デシジョンツリーで選ばれた相談メニュー（session.initialMessage）──
       const entryIntent = (session.initialMessage as string) || "";
@@ -148,11 +158,16 @@ export const onVisitorMessageCreated = onDocumentCreated(
       });
 
       // ── Step 6: AI回答をメッセージに追加 ──
+      //   photoUrls は登録済み写真のホワイトリストでフィルタ（AIの創作URLを排除）・最大2枚
+      const photoUrls = (aiResponse.photoUrls ?? [])
+        .filter((u) => allowedPhotoUrls.has(u))
+        .slice(0, 2);
       await chatDb.collection(`chat_sessions/${sessionId}/chat_messages`).add({
         role: "ai",
         content: aiResponse.answer,
         resolved: aiResponse.resolved,
         directToContact: aiResponse.directToContact ?? false,
+        photoUrls,
         language: aiResponse.language,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
