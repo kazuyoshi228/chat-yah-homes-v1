@@ -53,6 +53,44 @@ export function extractText(htmlStr: string): string {
   return t.trim();
 }
 
+/**
+ * フォールバック: クライアントJSレンダリングのページ（how-to 等）では本文が
+ * <script> 内の多言語辞書JSONに入っている。script中の文字列リテラルから
+ * 「人間向けテキストらしいもの」を収穫する（スペース含む／CJK含む／十分長い、のみ採用）。
+ */
+export function harvestScriptText(htmlStr: string): string {
+  const scripts = [...htmlStr.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)].map(
+    (m) => m[1]
+  );
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const s of scripts) {
+    for (const m of s.matchAll(/"((?:[^"\\]|\\.){4,500})"/g)) {
+      let v = m[1]
+        .replace(/\\n/g, " ")
+        .replace(/\\"/g, '"')
+        .replace(/\\\//g, "/")
+        .trim();
+      if (!v || seen.has(v)) continue;
+      if (/^(https?:|data:|\/|#|\.|@)/.test(v)) continue; // URL/パス類は除外
+      const hasCjk = /[぀-ヿ一-鿿가-힣฀-๿]/.test(v);
+      const hasSpace = v.includes(" ");
+      if (!hasCjk && !hasSpace && v.length < 25) continue; // 変数キー等を除外
+      seen.add(v);
+      out.push(v);
+    }
+  }
+  return out.join("\n");
+}
+
+/** 本文抽出（静的HTML優先・薄ければscript辞書から収穫して補完） */
+export function extractRichText(htmlStr: string): string {
+  const base = extractText(htmlStr);
+  if (base.length >= 1500) return base;
+  const harvested = harvestScriptText(htmlStr);
+  return harvested.length > base.length ? `${base}\n${harvested}`.trim() : base;
+}
+
 interface SiteSource {
   url?: string;
   facilityId?: string;
@@ -72,7 +110,7 @@ export async function syncOneSource(
       headers: { "User-Agent": "yah-homes-chat-sync/1.0" },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = extractText(await res.text());
+    const text = extractRichText(await res.text());
     if (text.length < 200) throw new Error("本文が短すぎる（抽出失敗の疑い）");
 
     // 全文ハッシュで変更検知（チャンク割りの前に判定）

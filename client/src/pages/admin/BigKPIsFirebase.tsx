@@ -198,8 +198,59 @@ export default function BigKPIsFirebase() {
 
         {/* 失敗分析（計測ループ・chat_agent_logs） */}
         <FailureAnalysisCard />
+
+        {/* SSoTマップ（情報の正本と編集場所の案内） */}
+        <SsotMapCard />
       </div>
     </DashboardLayout>
+  );
+}
+
+// ── SSoTマップカード（静的・運用者向けリファレンス） ──
+//    「どこを編集すればチャットに反映されるか」の一覧。運用の入口を迷わせない。
+const SSOT_ROWS: { info: string; source: string; path: string }[] = [
+  { info: "施設スペック・数値・chat用情報", source: "admin/properties（property_facts）", path: "チャットへ毎ターン自動注入（最大5分で反映）" },
+  { info: "規約・ハウスルール・キャンセル", source: "yah.homes/legal/terms", path: "毎日06:00 JSTにRAGへ自動同期" },
+  { info: "物件ページ（設備・ベッド・アクセス）", source: "yah.homes/properties/{施設}", path: "毎日06:00 JSTにRAGへ自動同期" },
+  { info: "使い方ガイド（駐車場・入室・設備手順）", source: "yah.homes/how-to/{施設}", path: "毎日06:00 JSTにRAGへ自動同期" },
+  { info: "周辺おすすめ（飲食・コンビニ・薬局等）", source: "yah.homes/locals/・/guides/", path: "毎日06:00 JSTにRAGへ自動同期＋AIがURL誘導" },
+  { info: "窓口・緊急連絡先・Wi-Fi（暫定）", source: "chat側マスタ（chat_facilities）", path: "チャットへ毎ターン自動注入" },
+  { info: "上記に無い運用知識（FAQ等）", source: "このAdminの RAG ドキュメント", path: "保存時に自動Embedding→即反映" },
+  { info: "鍵・入室暗証番号", source: "property_secrets（本体管理）", path: "🚫 チャットは読まない・絶対に案内しない" },
+];
+
+function SsotMapCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">SSoTマップ（情報の正本と編集場所）</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          チャットの回答を変えたいときは、下の「正本」を編集してください（二重管理しない）。
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="text-left text-muted-foreground border-b">
+                <th className="py-1.5 pr-3 font-medium">情報</th>
+                <th className="py-1.5 pr-3 font-medium">正本（編集場所）</th>
+                <th className="py-1.5 font-medium">チャットへの反映経路</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SSOT_ROWS.map((r) => (
+                <tr key={r.info} className="border-b last:border-0 align-top">
+                  <td className="py-1.5 pr-3 font-medium">{r.info}</td>
+                  <td className="py-1.5 pr-3">{r.source}</td>
+                  <td className="py-1.5 text-muted-foreground">{r.path}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
