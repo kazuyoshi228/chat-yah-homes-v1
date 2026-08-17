@@ -1,0 +1,151 @@
+rules_version = '2';
+
+// ═══════════════════════════════════════════════════════════
+// chat named DB 専用ルール（firebase.json で database "chat" にバインド）
+// chat.yah.homes（宿泊施設ゲストサポート）
+//
+// 🚨 このリポジトリからは (default)（yah-homes 本体）のルールを一切宣言しない。
+//    デプロイは必ず `firebase deploy --only firestore:chat`（素のdeploy禁止）。
+//
+// 設計:
+//  - chat DB には chat 自身のデータのみ（予約・顧客データは持たない）
+//  - create は hasOnly + 型/値検証で余計なフィールド注入を防ぐ
+//  - Functions (Admin SDK) はルールをバイパスして AI 応答等を書き込む
+// ═══════════════════════════════════════════════════════════
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── ヘルパー ──────────────────────────────────
+    function isAuth() { return request.auth != null; }
+
+    function isAnonymous() {
+      return request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    function isVerified() { return isAuth() && !isAnonymous(); }
+
+    // 管理者判定（多層防御）:
+    //  - 非匿名（isVerified）
+    //  - email_verified == true（未確認メールでの詐称を排除）
+    //  - Google ログイン限定（sign_in_provider == 'google.com'）
+    //  - 許可ドメイン（@bonfire.co.jp）
+    // ※ メール/パスワード等で attacker@bonfire.co.jp を自己登録しても、
+    //   email_verified/provider が一致しないため管理者にならない。
+    function isAdmin() {
+      return isVerified()
+        && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.auth.token.email.matches('.*@bonfire[.]co[.]jp$');
+    }
+
+    function isOwner(uid) { return isAuth() && request.auth.uid == uid; }
+
+    function isSessionOwner(sid) {
+      return isAuth() &&
+        get(/databases/$(database)/documents/chat_sessions/$(sid)).data.visitorId == request.auth.uid;
+    }
+
+    function isRecent() { return request.resource.data.createdAt == request.time; }
+
+    // facilityId の形式検証（小文字英数とハイフンのみ・1〜40字）
+    function isFacilitySlug(v) {
+      return v is string && v.size() >= 1 && v.size() <= 40 && v.matches('[a-z0-9-]+');
+    }
+
+    // ── chat_sessions ────────────────────────────
+    match /chat_sessions/{sid} {
+      // 作成: 認証本人のみ・許可フィールドのみ（注入防止）
+      allow create: if isAuth()
+        && request.resource.data.keys().hasOnly(['visitorId', 'status', 'language', 'facilityId', 'initialMessage', 'createdAt'])
+        && request.resource.data.keys().hasAll(['visitorId', 'status', 'language', 'facilityId', 'createdAt'])
+        && request.resource.data.visitorId == request.auth.uid
+        && request.resource.data.status == 'active'
+        && request.resource.data.language is string
+        && request.resource.data.language.size() >= 2
+        && request.resource.data.language.size() <= 10
+        && isFacilitySlug(request.resource.data.facilityId)
+        && (!('initialMessage' in request.resource.data)
+            || request.resource.data.initialMessage == null
+            || (request.resource.data.initialMessage is string
+                && request.resource.data.initialMessage.size() <= 2000))
+        && isRecent();
+
+      // 読取: セッションオーナー or Admin
+      allow read: if isAdmin() || isOwner(resource.data.visitorId);
+
+      // 更新: オーナー or 管理者が「終了（status→ended ＋ endedAt）」のみ可
+      //   （管理画面からアクティブなセッションを手動終了できるようにする。
+      //     それ以外のフィールド変更は誰であっても不可）
+      allow update: if (isOwner(resource.data.visitorId) || isAdmin())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'endedAt'])
+        && request.resource.data.status == 'ended'
+        && request.resource.data.endedAt == request.time;
+
+      allow delete: if false;
+
+      // ── メッセージ ──
+      match /chat_messages/{mid} {
+        allow read: if isAdmin() || isSessionOwner(sid);
+        allow create: if isSessionOwner(sid)
+          && request.resource.data.keys().hasOnly(['role', 'content', 'createdAt'])
+          && request.resource.data.keys().hasAll(['role', 'content', 'createdAt'])
+          && request.resource.data.role == 'visitor'
+          && request.resource.data.content is string
+          && request.resource.data.content.size() >= 1
+          && request.resource.data.content.size() <= 2000
+          && isRecent();
+        allow update, delete: if false;
+      }
+    }
+
+    // ── アンケート（doc id = sessionId・本人のみ作成） ──
+    match /chat_surveys/{sid} {
+      allow create: if isAuth()
+        && request.resource.data.keys().hasOnly(['sessionId', 'visitorId', 'facilityId', 'rating', 'resolved', 'freeComment', 'createdAt'])
+        && request.resource.data.keys().hasAll(['sessionId', 'visitorId', 'rating', 'createdAt'])
+        && request.resource.data.sessionId == sid
+        && request.resource.data.visitorId == request.auth.uid
+        && request.resource.data.rating is int
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && (!('facilityId' in request.resource.data)
+            || isFacilitySlug(request.resource.data.facilityId))
+        && isRecent();
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ── 施設マスタ（施設判定・案内画面・AIコンテキストの正本） ──
+    //   訪問者は施設ページ表示前（匿名認証確立後）に読む。書込は管理者のみ。
+    match /chat_facilities/{id} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── チャットフロー（デシジョンツリー） ──
+    match /chat_flow_nodes/{id} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+    // ── RAG ドキュメント（AI知識ベース） ──
+    match /chat_rag_documents/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── ホスピタリティ基準 ──
+    match /chat_hospitality_guidelines/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── エージェントログ（監査） ──
+    match /chat_agent_logs/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── デフォルト拒否 ──
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

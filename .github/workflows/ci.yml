@@ -1,0 +1,71 @@
+# CI — push/PR ごとに 型チェック・ビルド・Firestoreルール回帰テストを自動実行
+#
+# 実行内容（3ジョブ並列）:
+#   client    : tsc --noEmit ＋ vite build
+#   functions : npm ci ＋ tsc（codebase chat）
+#   rules     : firestore emulator 上でルール回帰テスト14件（pnpm test:rules）
+#
+# 🚫 デプロイはしない（デプロイは従来どおりローカルから手動）。
+# 🚫 SIM（simulate_chat.mjs）は本番Gemini/Firestoreを叩くため CI では回さない。
+
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  client:
+    name: Client (tsc + vite build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4 # バージョンは package.json の packageManager を使用
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec tsc --noEmit -p tsconfig.json
+      - run: pnpm run build
+
+  functions:
+    name: Functions (tsc)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  rules:
+    name: Firestore rules tests (emulator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4 # emulator に Java が必要
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Cache Firebase emulator binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}
+      - run: pnpm install --frozen-lockfile
+      - run: npm install -g firebase-tools
+      - run: pnpm test:rules
