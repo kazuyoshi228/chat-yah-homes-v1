@@ -44,6 +44,14 @@ const FACILITIES = [
       // 規約（2026-08-14施行）の「緊急のご連絡先（ご宿泊中のお客様専用）」を採用（ユーザー確定 2026-08-17）
       // ※表札には 092-600-3490 の記載もあるが、チャットで案内するのはこちら
       emergencyPhone: "050-1721-4419",
+      // Wi-Fi はチャットで案内してよい（2026-08-17 方針確定）。値は掲示サインより。
+      // 将来 admin/properties（property_facts）にフィールドが用意できたらそちらへ移す
+      wifi: {
+        ssid24: "SGP200W-BDA8-bg",
+        ssid5: "SGP200W-BDA8-a",
+        password: "Nrzc4UH9",
+        signLocation: "on the console in the center of the LDK (living room)",
+      },
       notes:
         "3-story building (rooms across 1F-3F). Emergency exit maps are posted on each floor. Wi-Fi details are posted on the acrylic sign in the room (never share credentials in chat).",
       isActive: true,

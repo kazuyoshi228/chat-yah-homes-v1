@@ -31,7 +31,14 @@ export interface FacilityDoc {
   };
   /** 緊急連絡先（設備の重大トラブル等。火事・救急は 119/110 が先） */
   emergencyPhone?: string;
-  /** 自由記述の補足（Wi-Fi名の場所案内など機微でないもの） */
+  /** Wi-Fi 情報（2026-08-17 方針: パスワードはチャットで案内してよい） */
+  wifi?: {
+    ssid24?: string;
+    ssid5?: string;
+    password?: string;
+    signLocation?: string; // 掲示場所（例: LDK中央のコンソールの上）
+  };
+  /** 自由記述の補足（機微でないもの） */
   notes?: string;
   /** 公開フラグ（false = 準備中・テスト用。ウィジェットの施設判定にも使用） */
   isActive?: boolean;
@@ -86,6 +93,15 @@ export async function getFacilityContext(facilityId: string): Promise<string> {
     }
     if (f.emergencyPhone) {
       lines.push(`- Facility emergency phone: ${f.emergencyPhone}`);
+    }
+    const w = f.wifi ?? {};
+    if (w.ssid24 || w.ssid5 || w.password) {
+      const parts: string[] = [];
+      if (w.ssid24) parts.push(`SSID 2.4GHz: ${w.ssid24}`);
+      if (w.ssid5) parts.push(`SSID 5GHz: ${w.ssid5}`);
+      if (w.password) parts.push(`Password: ${w.password}`);
+      if (w.signLocation) parts.push(`(also posted at: ${w.signLocation})`);
+      lines.push(`- Wi-Fi (OK to share with guests in chat): ${parts.join(" / ")}`);
     }
     if (f.notes) lines.push(`- Notes: ${f.notes}`);
 

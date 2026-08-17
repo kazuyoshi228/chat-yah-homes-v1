@@ -5,7 +5,8 @@ yah.homes（宿泊施設ブランド）の宿泊者向けAIチャットサポー
 ## 🚨 最重要ガードレール
 
 1. **Firebase プロジェクト `yah-homes` は yah.homes 本体と共有。** chat が使ってよいのは:
-   - Firestore **named DB「chat」のみ**（read/write）。**(default) DB には read も write もしない**（依存ゼロ設計）。
+   - Firestore **named DB「chat」**（read/write）。
+   - **(default) DB は read-only**。参照してよいのは **`property_facts` のみ**（= admin/properties の施設事実正本。utils/propertyFacts がライブ注入）。**`property_secrets`（鍵ボックス暗証番号）は絶対に読まない**。write/delete/ルール変更は一切しない。
    - Functions は **codebase「chat」のみ**。本体側の関数・ルール・Hosting 既存サイト（yah-homes）には一切触れない。
 2. **素の `firebase deploy` は禁止**（`npm run deploy` はエラーで止まる）。必ずスコープ付き:
    - Functions: `pnpm deploy:functions`（= `--only functions:chat`）

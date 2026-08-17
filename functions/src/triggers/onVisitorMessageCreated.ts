@@ -29,6 +29,7 @@ import {
 } from "../utils/ai";
 import { checkBurstRateLimit, checkDailyRateLimit } from "../utils/rateLimits";
 import { getFacilityContext } from "../utils/facilityContext";
+import { getPropertyFacts } from "../utils/propertyFacts";
 import { classifyFailure } from "../utils/classifyFailure";
 import { REGION, MAX_MESSAGES_PER_SESSION } from "../config";
 
@@ -107,8 +108,16 @@ export const onVisitorMessageCreated = onDocumentCreated(
       const ragResults = await searchRAG(data.content, facilityId);
       const ragContext = ragResults.map((r) => r.content).join("\n\n---\n\n");
 
-      // ── Step 2.5: 施設マスタの正本を取得（chat_facilities・5分キャッシュ） ──
-      const facilityContext = await getFacilityContext(facilityId);
+      // ── Step 2.5: 施設情報の正本を取得（両方とも5分キャッシュ） ──
+      //   chat_facilities（窓口・Wi-Fi・チャット用メモ）＋
+      //   (default)/property_facts（admin/properties の施設事実・read-only）
+      const [facilityMaster, propertyFacts] = await Promise.all([
+        getFacilityContext(facilityId),
+        getPropertyFacts(facilityId),
+      ]);
+      const facilityContext = [facilityMaster, propertyFacts]
+        .filter(Boolean)
+        .join("\n");
 
       // ── Step 3: 冒頭デシジョンツリーで選ばれた相談メニュー（session.initialMessage）──
       const entryIntent = (session.initialMessage as string) || "";
