@@ -15,9 +15,10 @@ export { onVisitorMessageCreated } from "./triggers/onVisitorMessageCreated";
 export { onSessionEnded } from "./triggers/onSessionEnded";
 export { onRagDocumentWritten } from "./triggers/onRagDocumentWritten";
 
-// ── Scheduled 関数 (2関数) ──
+// ── Scheduled 関数 (3関数) ──
 export { dataRetentionPurge } from "./scheduled/dataRetention";
 export { generateRagDrafts } from "./scheduled/generateRagDrafts";
+export { syncSiteSources } from "./scheduled/syncSiteSources"; // 公開サイト→RAG自動同期（SSoT）
 
 // ── Callable 関数 (1関数) ──
 export { claimSession } from "./callables/claimSession";

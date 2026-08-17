@@ -1,0 +1,117 @@
+/**
+ * syncSiteSources — 公開サイト（yah.homes）のページをRAGへ自動同期（SSoTファースト）
+ *
+ * SSoT = 公開サイト。規約・物件ページ等の内容をRAGに手書きコピーすると陳腐化するため、
+ * chat DB の chat_site_sources に登録されたURLを毎日取得し、本文テキストを抽出して
+ * chat_rag_documents/site-{id} を更新する（変更時のみ・onRagDocumentWritten が自動再Embedding）。
+ *
+ * 同期対象の追加＝chat_site_sources にドキュメントを1件足すだけ（コード変更不要）:
+ *   { url, facilityId("common"可), category, title, isActive }
+ */
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import * as admin from "firebase-admin";
+import * as crypto from "crypto";
+import { chatDb } from "../db";
+import { REGION } from "../config";
+
+/** Embedding入力上限(8000)手前に収める本文キャップ */
+const CONTENT_CAP = 7500;
+
+/** HTMLから本文テキストを抽出（素朴・依存ゼロ） */
+export function extractText(htmlStr: string): string {
+  let t = htmlStr;
+  t = t.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<noscript[\s\S]*?<\/noscript>/gi, "");
+  t = t.replace(/<[^>]+>/g, "\n");
+  t = t
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, " ");
+  t = t.replace(/[ \t]+/g, " ");
+  t = t.replace(/\n\s*\n+/g, "\n");
+  return t.trim();
+}
+
+interface SiteSource {
+  url?: string;
+  facilityId?: string;
+  category?: string;
+  title?: string;
+  isActive?: boolean;
+}
+
+/** 1ソースを同期。戻り値: "updated" | "unchanged" | "error" */
+export async function syncOneSource(
+  id: string,
+  src: SiteSource
+): Promise<"updated" | "unchanged" | "error"> {
+  if (!src.url) return "error";
+  try {
+    const res = await fetch(src.url, {
+      headers: { "User-Agent": "yah-homes-chat-sync/1.0" },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = extractText(await res.text()).slice(0, CONTENT_CAP);
+    if (text.length < 200) throw new Error("本文が短すぎる（抽出失敗の疑い）");
+
+    const hash = crypto.createHash("sha256").update(text).digest("hex");
+    const docRef = chatDb.collection("chat_rag_documents").doc(`site-${id}`);
+    const existing = await docRef.get();
+    if (existing.exists && existing.data()?.contentHash === hash) {
+      return "unchanged";
+    }
+
+    await docRef.set(
+      {
+        title: src.title ?? `Site sync: ${src.url}`,
+        content: `[Auto-synced from ${src.url} — the live site is the source of truth]\n\n${text}`,
+        category: src.category ?? "site",
+        facilityId: src.facilityId ?? "common",
+        isActive: true,
+        source: "site_sync",
+        sourceUrl: src.url,
+        contentHash: hash,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: existing.exists
+          ? existing.data()?.createdAt ?? admin.firestore.FieldValue.serverTimestamp()
+          : admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    console.log(`site_sync 更新: ${id} (${text.length}字)`);
+    return "updated";
+  } catch (e) {
+    console.error(`site_sync 失敗: ${id} (${src.url}):`, e);
+    return "error";
+  }
+}
+
+/** 毎日 06:00 JST に全ソース同期 */
+export const syncSiteSources = onSchedule(
+  {
+    schedule: "0 6 * * *",
+    timeZone: "Asia/Tokyo",
+    region: REGION,
+    memory: "256MiB",
+    timeoutSeconds: 300,
+  },
+  async () => {
+    const snap = await chatDb.collection("chat_site_sources").get();
+    let updated = 0,
+      unchanged = 0,
+      errors = 0;
+    for (const d of snap.docs) {
+      const src = d.data() as SiteSource;
+      if (src.isActive === false) continue;
+      const r = await syncOneSource(d.id, src);
+      if (r === "updated") updated++;
+      else if (r === "unchanged") unchanged++;
+      else errors++;
+    }
+    console.log(
+      `syncSiteSources 完了: 更新${updated} / 変更なし${unchanged} / 失敗${errors}`
+    );
+  }
+);

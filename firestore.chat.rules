@@ -133,6 +133,11 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // ── サイト同期ソース（公開サイト→RAG自動同期の対象URL登録） ──
+    match /chat_site_sources/{id} {
+      allow read, write: if isAdmin();
+    }
+
     // ── ホスピタリティ基準 ──
     match /chat_hospitality_guidelines/{id} {
       allow read, write: if isAdmin();
