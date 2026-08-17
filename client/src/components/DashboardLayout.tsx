@@ -94,13 +94,9 @@ export default function DashboardLayout({
         <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative z-10">
           <YahLogo className="text-white" height={36} />
           <div className="space-y-4">
-            <p className="text-white/40 text-xs tracking-widest uppercase">yah.homes</p>
             <h2 className="text-white text-3xl font-semibold leading-snug tracking-tight">
               Chat Support<br />Admin Portal
             </h2>
-            <p className="text-white/50 text-sm leading-relaxed max-w-xs">
-              Manage conversations, monitor AI performance, and deliver world-class support.
-            </p>
           </div>
           <p className="text-white/20 text-xs">
             © {new Date().getFullYear()} yah.homes. All rights reserved.
