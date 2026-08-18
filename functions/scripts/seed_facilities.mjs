@@ -23,37 +23,14 @@ const app = initializeApp({ credential: applicationDefault(), projectId: PROJECT
 const chat = getFirestore(app, "chat");
 const COL = "chat_facilities";
 
+// 🚨 2026-08-18 縮小: 施設コンテンツ（Wi-Fi・窓口・住所・緊急連絡先等）の正本は
+//    admin/properties の chat用情報（property_facts.chatInfo）に一本化した。
+//    chat_facilities は「公開フラグ＋表示名」だけの最小マスタ（チャットの動作制御専用）。
 const FACILITIES = [
   {
     id: "kiyokawa",
     data: {
-      // 表札サイン（公式掲示）より確定: docs/rag_sources/kiyokawa_signage.md
       name: { ja: "yah.kiyokawa", en: "yah.kiyokawa" },
-      checkIn: "", // ヒアリング後に設定（例 "16:00"）
-      checkOut: "", // ヒアリング後に設定（例 "10:00"）
-      address:
-        "〒810-0005 福岡県福岡市中央区清川3-3-1 / 3-3-1 Kiyokawa, Chuo-ku, Fukuoka 810-0005 Japan",
-      mapUrl: "",
-      contacts: {
-        officialEmail: "", // ヒアリング後に設定
-        officialPhone: "",
-        bookingCom: "Please contact us via the message feature in the Booking.com app.",
-        airbnb: "Please contact us via the message feature in the Airbnb app.",
-        other: "",
-      },
-      // 規約（2026-08-14施行）の「緊急のご連絡先（ご宿泊中のお客様専用）」を採用（ユーザー確定 2026-08-17）
-      // ※表札には 092-600-3490 の記載もあるが、チャットで案内するのはこちら
-      emergencyPhone: "050-1721-4419",
-      // Wi-Fi はチャットで案内してよい（2026-08-17 方針確定）。値は掲示サインより。
-      // 将来 admin/properties（property_facts）にフィールドが用意できたらそちらへ移す
-      wifi: {
-        ssid24: "SGP200W-BDA8-bg",
-        ssid5: "SGP200W-BDA8-a",
-        password: "Nrzc4UH9",
-        signLocation: "on the console in the center of the LDK (living room)",
-      },
-      notes:
-        "3-story building (rooms across 1F-3F). Emergency exit maps are posted on each floor. Wi-Fi details are posted on the acrylic sign in the room (never share credentials in chat).",
       isActive: true,
     },
   },
