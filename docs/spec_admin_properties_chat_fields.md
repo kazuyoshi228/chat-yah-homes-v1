@@ -99,6 +99,17 @@
 | 周辺おすすめ | **yah.homes/locals/・/guides/** | AIがURL誘導 |
 | 鍵・キーボックス番号 | property_secrets | **チャットは読まない・案内しない** |
 
+## 確定事項（2026-08-18）：admin/templates/#values には相乗りしない
+
+チャットが読む施設情報の正本は **property_facts（chat用情報）のみ**とする。
+`mail_templates`（templates/#values）はメール文言の正本として使い分け、**チャットは読まない**。
+理由: values には入室暗証番号など機微情報が構造的に混ざり得るため（実際に checkin_ja の
+`strings.remEntryBody` に暗証番号らしき実値が直書きされているのを確認）。チャットに読ませる
+SSoTは「機微情報が入り得ない場所」に限定する設計原則を維持する。
+
 ## 本体側への連絡事項（データ修正のお願い）
 
 - **`property_facts/kiyokawa` の `washer=0` が古い可能性**：物件ページには「2026年5月にドラム式洗濯乾燥機を設置」とあります。`washer=1` への更新をご検討ください（`dryer=1` は衣類乾燥機の意で整合）。
+- **`mail_templates/checkin_ja` の `strings.remEntryBody` に暗証番号らしき実値（4桁）が直書き**：
+  規約の「暗証番号は宿泊ごとに変更」と不整合の可能性。「暗証番号は {{keyboxCode}} です」のような
+  差し込み変数にして、実値は宿泊ごとに property_secrets から差し込む形を推奨（送信事故・固定番号運用の防止）。
