@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { FACILITY_LABELS, pick } from "@/components/widget/labels";
 import { resolveFacilityName } from "@/pages/FacilityChat";
+import { YahLogo } from "@/components/YahLogo";
 
 
 interface FacilityRow {
@@ -58,12 +59,9 @@ export default function FacilitySelect({
   return (
     <div className="w-full min-h-[100dvh] bg-white flex flex-col items-center justify-center px-6 py-10">
       <div className="w-full max-w-sm flex flex-col items-center gap-6">
-        <div className="flex items-center gap-2">
-          <img src="/logo_yah.svg" alt="yah.homes" className="w-10 h-10" />
-          <div>
-            <p className="text-base font-semibold">yah.homes</p>
-            <p className="text-xs text-gray-500">24/7 AI chat support</p>
-          </div>
+        <div className="flex flex-col items-center gap-1">
+          <YahLogo className="text-black" height={34} />
+          <p className="text-xs text-gray-500">24/7 AI chat support</p>
         </div>
 
         {showNotFound && (

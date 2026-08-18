@@ -98,10 +98,6 @@ export default function AdminPhotos() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">チャット用写真</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            登録した写真は、関連する質問（例:「駐車場」ラベル→駐車場の質問）でAIが回答に添付します。
-            🚨 鍵・暗証番号が写った写真は登録しないでください。
-          </p>
         </div>
 
         <Card>

@@ -8,6 +8,7 @@
  */
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, LogIn, LogOut } from "lucide-react";
+import { YahLogo } from "@/components/YahLogo";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { collection, getDocs, addDoc, setDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -210,8 +211,8 @@ export default function ChatWidgetFirebase({
               <ChevronLeft className="w-4 h-4" />
             </button>
           )}
-          {/* yah.homes ロゴ（Webサイトと共通のマーク・白版） */}
-          <img src="/logo_yah_white.svg" alt="yah.homes" className="w-8 h-8" />
+          {/* yah.homes 横型ロゴ（白） */}
+          <YahLogo className="text-white" height={24} />
           <div>
             <p className="text-sm font-medium text-white">{facilityName}</p>
             <p className="text-xs text-white/60">
