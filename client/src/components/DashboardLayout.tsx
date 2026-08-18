@@ -34,6 +34,8 @@ export type SidebarItem = {
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  /** 別サイトへの導線（新しいタブで開く）。QRのように正本が yah.homes 側にあるもの用 */
+  external?: boolean;
 };
 
 const DEFAULT_ADMIN_ITEMS: SidebarItem[] = [
@@ -41,8 +43,9 @@ const DEFAULT_ADMIN_ITEMS: SidebarItem[] = [
   { title: "Chat List", href: "/admin/chats", icon: MessageCircle },
   { title: "RAG Documents", href: "/admin/rag", icon: BookOpen },
   { title: "写真", href: "/admin/photos", icon: Image },
-  { title: "QRコード", href: "/admin/qr", icon: QrCode },
   { title: "施設", href: "/admin/facilities", icon: Building2 },
+  // QRの正本は yah.homes の物件情報ページ（実体もそこ・2026-08-18 発注者承認）
+  { title: "QRコード", href: "https://yah.homes/admin/properties/kiyokawa/#qr", icon: QrCode, external: true },
   { title: "SSoTマップ", href: "/admin/ssot-map", icon: Map },
   { title: "Feedback", href: "/admin/feedback", icon: Star },
   { title: "Flow Tree", href: "/admin/flow-tree", icon: GitBranch },
@@ -308,15 +311,20 @@ function DashboardLayoutContent({
             <SidebarMenu className="px-2 py-2">
               {sidebarItems.map((item) => {
                 // "/admin"（Big KPIs）は全サブページの接頭辞になるため完全一致のみで判定
-                const isActive =
-                  item.href === "/admin"
+                const isActive = item.external
+                  ? false
+                  : item.href === "/admin"
                     ? location === "/admin" || location === "/admin/dashboard"
                     : location === item.href || location.startsWith(item.href + "/");
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(item.href)}
+                      onClick={() =>
+                        item.external
+                          ? window.open(item.href, "_blank", "noopener")
+                          : setLocation(item.href)
+                      }
                       tooltip={item.title}
                       className="h-9 font-normal text-sm"
                     >

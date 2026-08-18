@@ -17,7 +17,7 @@ const SSOT_ROWS: { info: string; source: string; path: string }[] = [
   { info: "チャット用写真（駐車場・分電盤など）", source: "このAdminの「写真」ページ", path: "AIが関連する質問で画像カードとして添付" },
   { info: "施設の公開フラグ・表示名（チャット動作制御）", source: "chat側マスタ（chat_facilities）", path: "施設URLの有効判定・ヘッダー表示に使用" },
   { info: "上記に無い運用知識（他に正本が無いものだけ）", source: "このAdminの「RAG Documents」", path: "保存時に自動Embedding→即反映" },
-  { info: "施設QRコード（印刷・ダウンロード）", source: "このAdminの「QRコード」ページ", path: "公開中の施設ぶん自動生成" },
+  { info: "施設QRコード（印刷・ダウンロード）", source: "yah.homes/admin/properties/{施設}/#qr", path: "chat_facilities の公開施設ぶん自動生成（yah.homes がホスト）" },
   { info: "鍵・入室暗証番号", source: "property_secrets（本体管理）", path: "🚫 チャットは読まない・絶対に案内しない" },
 ];
 

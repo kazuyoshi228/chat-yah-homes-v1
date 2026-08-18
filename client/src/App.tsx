@@ -24,7 +24,6 @@ import AdminFeedback from "@/pages/admin/AdminFeedbackFirebase";
 import Hospitality from "@/pages/admin/HospitalityFirebase";
 import AdminPhotos from "@/pages/admin/AdminPhotos";
 import AdminSsotMap from "@/pages/admin/AdminSsotMap";
-import AdminQr from "@/pages/admin/AdminQr";
 import AdminFacilities from "@/pages/admin/AdminFacilities";
 
 export default function App() {
@@ -44,7 +43,6 @@ export default function App() {
         <Route path="/admin/hospitality" component={Hospitality} />
         <Route path="/admin/photos" component={AdminPhotos} />
         <Route path="/admin/ssot-map" component={AdminSsotMap} />
-        <Route path="/admin/qr" component={AdminQr} />
         <Route path="/admin/facilities" component={AdminFacilities} />
 
         {/* 施設別チャット（認証不要・マスタ駆動）。未知スラッグは内部で施設案内へ */}
