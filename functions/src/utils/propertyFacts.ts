@@ -89,13 +89,24 @@ export async function getPropertyFacts(facilityId: string): Promise<string> {
 
     const known: string[] = [];
     const extra: string[] = [];
+    // chat用情報（admin/properties の #chat セクション）: {q, a} 行の配列を専用整形
+    const chatInfoLines: string[] = [];
+    const rawChatInfo = data.chatInfo;
+    if (Array.isArray(rawChatInfo)) {
+      for (const row of rawChatInfo) {
+        const q = typeof row?.q === "string" ? row.q.trim() : "";
+        const a = typeof row?.a === "string" ? row.a.trim() : "";
+        if (q && a) chatInfoLines.push(`- ${q}: ${a}`);
+      }
+    }
+
     for (const [k, v] of Object.entries(data)) {
-      if (SKIP.has(k)) continue;
+      if (SKIP.has(k) || k === "chatInfo") continue;
       const def = KNOWN[k];
       if (def) {
         known.push(`- ${def.label}: ${def.fmt ? def.fmt(v) : fmtValue(v)}`);
       } else {
-        // 未知フィールド（admin側で追加された chat用情報など）は汎用注入
+        // 未知フィールド（admin側で追加されたものなど）は汎用注入
         const s = fmtValue(v);
         if (s) extra.push(`- ${k}: ${s}`);
       }
@@ -105,6 +116,12 @@ export async function getPropertyFacts(facilityId: string): Promise<string> {
       "[Live from the property master data (admin/properties, single source of truth). Numbers are facts — do not invent others.]",
       ...known,
       ...extra,
+      ...(chatInfoLines.length > 0
+        ? [
+            "[Owner-curated chat info (admin/properties #chat, single source of truth — Q&A format)]",
+            ...chatInfoLines,
+          ]
+        : []),
     ];
     const text = lines.join("\n");
     cache.set(facilityId, { text, at: Date.now() });
