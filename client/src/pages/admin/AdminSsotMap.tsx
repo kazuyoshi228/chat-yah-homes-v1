@@ -8,14 +8,16 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const SSOT_ROWS: { info: string; source: string; path: string }[] = [
-  { info: "施設スペック・数値・chat用情報", source: "yah.homes/admin/properties/{施設}/", path: "チャットへ毎ターン自動注入（最大5分で反映）" },
+  { info: "施設スペック・数値（時刻・定員・設備等）", source: "yah.homes/admin/properties/{施設}/", path: "チャットへ毎ターン自動注入（最大5分で反映）" },
+  { info: "chat用情報（Wi-Fi・窓口・使い方・トラブル対処 Q&A）", source: "yah.homes/admin/properties/{施設}/#chat", path: "チャットへ毎ターン自動注入（最大5分で反映）" },
   { info: "規約・ハウスルール・キャンセル", source: "yah.homes/legal/terms", path: "毎日06:00 JSTにRAGへ自動同期" },
-  { info: "物件ページ（設備・ベッド・アクセス）", source: "yah.homes/properties/{施設}", path: "毎日06:00 JSTにRAGへ自動同期" },
-  { info: "使い方ガイド（駐車場・入室・設備手順）", source: "yah.homes/how-to/{施設}", path: "毎日06:00 JSTにRAGへ自動同期" },
+  { info: "物件ページ（設備・ベッド・アクセス）", source: "yah.homes/properties/{施設}/", path: "毎日06:00 JSTにRAGへ自動同期" },
+  { info: "使い方ガイド（駐車場・入室・設備手順）", source: "yah.homes/how-to/{施設}/", path: "毎日06:00 JSTにRAGへ自動同期" },
   { info: "周辺おすすめ（飲食・コンビニ・薬局等）", source: "yah.homes/locals/・/guides/", path: "毎日06:00 JSTにRAGへ自動同期＋AIがURL誘導" },
   { info: "チャット用写真（駐車場・分電盤など）", source: "このAdminの「写真」ページ", path: "AIが関連する質問で画像カードとして添付" },
-  { info: "窓口・緊急連絡先・Wi-Fi（暫定）", source: "chat側マスタ（chat_facilities）", path: "チャットへ毎ターン自動注入 ※admin/properties実装後に移行" },
-  { info: "上記に無い運用知識（FAQ等）", source: "このAdminの「RAG Documents」", path: "保存時に自動Embedding→即反映" },
+  { info: "施設の公開フラグ・予約経路別の誘導文・緊急連絡先", source: "chat側マスタ（chat_facilities）", path: "チャットへ毎ターン自動注入" },
+  { info: "上記に無い運用知識（他に正本が無いものだけ）", source: "このAdminの「RAG Documents」", path: "保存時に自動Embedding→即反映" },
+  { info: "施設QRコード（印刷・ダウンロード）", source: "このAdminの「QRコード」ページ", path: "公開中の施設ぶん自動生成" },
   { info: "鍵・入室暗証番号", source: "property_secrets（本体管理）", path: "🚫 チャットは読まない・絶対に案内しない" },
 ];
 
