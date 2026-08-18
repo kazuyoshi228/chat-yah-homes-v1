@@ -27,6 +27,7 @@ yah.homes（宿泊施設ブランド）の宿泊者向けAIチャットサポー
   - **エスカレーション＝予約経路（Booking.com/Airbnb/公式）を1問確認 → 経路別窓口へ誘導**（窓口はマスタの contacts）。緊急時は 119/110 を最優先。
   - **暗証番号・鍵の詳細・Wi-Fiパスワードは本人確認不可のため絶対に回答しない**（RAGにも載せない）。
 - **RAG文書は必ず `facilityId` を持つ**（`"common"` = 全施設共通）。L1自動ドラフトは `facilityId:"common"`・`isActive:false` で投入され、管理画面で承認。
+- 🚨 **手書きRAGは「他に正本が無い知識」専用**（SSoTとの二重管理禁止）。サイト（規約/物件/how-to/locals＝自動同期）や property_facts（ライブ注入）にある内容をRAGに書き写さない——正本が更新されるとRAGが陳腐化し誤案内の火種になる（yah.mobile料金表事故と同型）。既存の手書き3文書（checkin-access/facilities/garbage-checkout）は **admin/properties の chat用情報が入力され次第削除する**（残すのはエアコン対訳のみ）。
 
 ## ビルド / 検証 / 環境
 

@@ -221,7 +221,7 @@ export default function AdminRagFirebase() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">RAG ドキュメント</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              AI応答の知識ベースを管理（保存時に自動でEmbedding生成）
+              手書き文書は「他に正本が無い知識」専用（正本がある内容はSSoTマップの編集場所へ）
             </p>
           </div>
           <Button onClick={openCreate}>
