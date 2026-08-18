@@ -1,8 +1,12 @@
 # 仕様書：admin/properties「chat用情報」セクション（yah.homes 本体側の実装用）
 
-対象: `yah.homes/admin/properties` の編集画面（**「受付の上限」セクションの下**に新設）
+対象: `yah.homes/admin/properties/{propertyId}/` の編集画面（施設別URL・2026-08-18に分割実装済み）
 保存先: `(default)/property_facts/{propertyId}` （既存ドキュメントに**フラットにフィールド追加**）
 作成日: 2026-08-17 ／ chat側実装: 済み（フィールドが生えれば自動でチャットに注入されます）
+
+⚠️ **保存確認（2026-08-18時点の未解決）**: admin画面のchat用情報セクションに入力した値
+（例: 近隣の病院）が `(default)` DB のどこにも保存されていないことを確認済み。
+保存処理が property_facts への書き込みに配線されているか、本体側での確認が必要。
 
 ## チャット側の読み取り仕様（前提）
 

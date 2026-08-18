@@ -8,7 +8,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const SSOT_ROWS: { info: string; source: string; path: string }[] = [
-  { info: "施設スペック・数値・chat用情報", source: "admin/properties（property_facts）", path: "チャットへ毎ターン自動注入（最大5分で反映）" },
+  { info: "施設スペック・数値・chat用情報", source: "yah.homes/admin/properties/{施設}/", path: "チャットへ毎ターン自動注入（最大5分で反映）" },
   { info: "規約・ハウスルール・キャンセル", source: "yah.homes/legal/terms", path: "毎日06:00 JSTにRAGへ自動同期" },
   { info: "物件ページ（設備・ベッド・アクセス）", source: "yah.homes/properties/{施設}", path: "毎日06:00 JSTにRAGへ自動同期" },
   { info: "使い方ガイド（駐車場・入室・設備手順）", source: "yah.homes/how-to/{施設}", path: "毎日06:00 JSTにRAGへ自動同期" },
