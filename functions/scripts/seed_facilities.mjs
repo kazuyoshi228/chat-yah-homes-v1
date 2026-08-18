@@ -34,19 +34,6 @@ const FACILITIES = [
       isActive: true,
     },
   },
-  {
-    id: "test-facility",
-    data: {
-      name: { ja: "テスト施設（非公開）", en: "Test Facility (private)" },
-      checkIn: "15:00",
-      checkOut: "11:00",
-      address: "TEST ONLY — not a real property",
-      contacts: { officialEmail: "test@example.com" },
-      notes:
-        "SIM用のダミー施設。この施設のRAG/情報が kiyokawa の回答に出たら混線バグ。",
-      isActive: false, // 非公開（ウィジェットの施設判定・案内画面に出さない）
-    },
-  },
 ];
 
 async function main() {
