@@ -45,7 +45,7 @@ const DEFAULT_ADMIN_ITEMS: SidebarItem[] = [
   { title: "写真", href: "/admin/photos", icon: Image },
   { title: "施設", href: "/admin/facilities", icon: Building2 },
   // QRの正本は yah.homes の物件情報ページ（実体もそこ・2026-08-18 発注者承認）
-  { title: "QRコード", href: "https://yah.homes/admin/properties/kiyokawa/#qr", icon: QrCode, external: true },
+  { title: "QRコード", href: "https://yah.homes/admin/properties/", icon: QrCode, external: true },
   { title: "SSoTマップ", href: "/admin/ssot-map", icon: Map },
   { title: "Feedback", href: "/admin/feedback", icon: Star },
   { title: "Flow Tree", href: "/admin/flow-tree", icon: GitBranch },

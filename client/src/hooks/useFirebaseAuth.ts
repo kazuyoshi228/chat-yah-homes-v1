@@ -22,10 +22,10 @@ import {
   type AuthError,
 } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { auth, googleProvider, app } from "@/lib/firebase";
+import { REGION, auth, googleProvider, app } from "@/lib/firebase";
 
 const claimSessionFn = httpsCallable(
-  getFunctions(app, "asia-northeast1"),
+  getFunctions(app, REGION),
   "claimSession"
 );
 /** 既存アカウントへ切替時: 匿名セッションの所有者を本人uidへ付け替え（会話継続） */

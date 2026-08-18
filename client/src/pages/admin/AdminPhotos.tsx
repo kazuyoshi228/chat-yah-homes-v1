@@ -8,7 +8,7 @@
 import { useMemo, useRef, useState } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { orderBy } from "firebase/firestore";
-import { app } from "@/lib/firebase";
+import { REGION, app } from "@/lib/firebase";
 import { useCollection } from "@/hooks/useFirestoreAdmin";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Trash2, Upload, Copy } from "lucide-react";
 
-const fns = getFunctions(app, "asia-northeast1");
+const fns = getFunctions(app, REGION);
 const uploadFn = httpsCallable(fns, "uploadChatPhoto");
 const deleteFn = httpsCallable(fns, "deleteChatPhoto");
 

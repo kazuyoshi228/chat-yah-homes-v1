@@ -24,6 +24,9 @@ import {
 } from "firebase/app-check";
 
 // Firebase設定 - 環境変数から取得
+/** Functions のリージョン（server 側 functions/src/config.ts と同値。直書き禁止） */
+export const REGION = "asia-northeast1";
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
