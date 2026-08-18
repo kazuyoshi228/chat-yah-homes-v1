@@ -354,7 +354,7 @@ export default function AdminChatListFirebase() {
                             <div className="flex items-center gap-2 my-2">
                               <div className="flex-1 h-px bg-red-200" />
                               <span className="text-[10px] text-red-600 whitespace-nowrap">
-                                📮 お問い合わせフォームへ誘導（エスカレーション）
+                                📮 窓口誘導（エスカレーション）
                               </span>
                               <div className="flex-1 h-px bg-red-200" />
                             </div>

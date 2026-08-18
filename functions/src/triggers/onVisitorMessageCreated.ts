@@ -129,6 +129,22 @@ export const onVisitorMessageCreated = onDocumentCreated(
       // AIが返してよい写真URLのホワイトリスト（創作URLの排除に使用）
       const allowedPhotoUrls = new Set(photoList.map((p) => p.url));
 
+      // ── Step 2.7: ログイン済みゲストの表示名をセッションに保存（管理画面用） ──
+      //   共有Authから引く（(default) DBには触らない）。匿名uidは何もしない。
+      //   1回書けば以後スキップ（customerName 既存時）。
+      if (!session.customerName) {
+        try {
+          const authUser = await admin.auth().getUser(visitorId);
+          const isAnon = (authUser.providerData ?? []).length === 0;
+          if (!isAnon) {
+            const name = authUser.displayName || authUser.email || null;
+            if (name) await sessionRef.update({ customerName: name });
+          }
+        } catch {
+          /* uid が見つからない等は匿名扱いのまま */
+        }
+      }
+
       // ── Step 3: 冒頭デシジョンツリーで選ばれた相談メニュー（session.initialMessage）──
       const entryIntent = (session.initialMessage as string) || "";
       const facilityContextWithIntent = entryIntent
