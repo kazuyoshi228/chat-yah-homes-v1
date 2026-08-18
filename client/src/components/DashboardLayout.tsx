@@ -307,7 +307,11 @@ function DashboardLayoutContent({
             </div>
             <SidebarMenu className="px-2 py-2">
               {sidebarItems.map((item) => {
-                const isActive = location === item.href || location.startsWith(item.href + "/");
+                // "/admin"（Big KPIs）は全サブページの接頭辞になるため完全一致のみで判定
+                const isActive =
+                  item.href === "/admin"
+                    ? location === "/admin" || location === "/admin/dashboard"
+                    : location === item.href || location.startsWith(item.href + "/");
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
