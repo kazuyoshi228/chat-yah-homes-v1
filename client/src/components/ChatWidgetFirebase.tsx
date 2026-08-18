@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, LogIn, LogOut } from "lucide-react";
 import { YahLogo } from "@/components/YahLogo";
+import { LanguagePicker } from "@/components/widget/LanguagePicker";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { collection, getDocs, addDoc, setDoc, doc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -56,11 +57,12 @@ export default function ChatWidgetFirebase({
   // チャットセッション管理
   const {
     sessionId,
+    restored,
     creating: sessionCreating,
     createSession,
     endSession,
     resetSession,
-  } = useChatSession();
+  } = useChatSession(facilityId);
 
   // ログイン/所有者付け替え後にメッセージ購読を張り直すためのキー
   const [authReloadKey, setAuthReloadKey] = useState(0);
@@ -73,6 +75,12 @@ export default function ChatWidgetFirebase({
 
   // ── ページ状態（単独ページ＝最初からフロー表示） ──
   const [widgetState, setWidgetState] = useState<WidgetState>("flow");
+
+  // 保存済みセッションを復元したら、分岐ではなく会話の続きから始める
+  //（滞在中に何度も開く宿泊者が、毎回メニュー選択からやり直さないように）
+  useEffect(() => {
+    if (restored) setWidgetState("chat");
+  }, [restored]);
   const [showLogin, setShowLogin] = useState(false);
 
   // デシジョンツリー状態
@@ -213,21 +221,22 @@ export default function ChatWidgetFirebase({
           )}
           {/* yah.homes 横型ロゴ（白） */}
           <YahLogo className="text-white" height={24} />
-          <div>
-            <p className="text-sm font-medium text-white">{facilityName}</p>
-            <p className="text-xs text-white/60">
-              yah.homes · 24/7 AI chat support
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white truncate">{facilityName}</p>
+            <p className="text-[10px] text-white/60 truncate hidden sm:block">
+              24/7 AI chat support
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <LanguagePicker />
           {isAnonymous ? (
             <button
               onClick={() => setShowLogin(true)}
               className="text-xs text-white/80 hover:text-white px-2 py-1 rounded-md border border-white/25 transition-colors flex items-center gap-1"
             >
               <LogIn className="w-3.5 h-3.5" />
-              {pick(AUTH_LABELS.signin, language)}
+              <span className="hidden sm:inline">{pick(AUTH_LABELS.signin, language)}</span>
             </button>
           ) : (
             <button
@@ -236,7 +245,7 @@ export default function ChatWidgetFirebase({
               className="text-xs text-white/70 hover:text-white px-2 py-1 rounded-md transition-colors flex items-center gap-1"
             >
               <LogOut className="w-3.5 h-3.5" />
-              {pick(AUTH_LABELS.signout, language)}
+              <span className="hidden sm:inline">{pick(AUTH_LABELS.signout, language)}</span>
             </button>
           )}
         </div>

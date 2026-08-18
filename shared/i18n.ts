@@ -12,6 +12,8 @@ export interface Translations {
   // チャットウィジェット
   widget_placeholder: string;
   widget_ended: string;
+  widget_send_failed: string;
+  widget_retry: string;
   // 終了アンケート
   widget_survey_title: string;
   survey_resolved_question: string;
@@ -25,7 +27,9 @@ export interface Translations {
 
 const en: Translations = {
   widget_placeholder: "Type a message...",
-  widget_ended: "Chat ended",
+  widget_ended: "End this chat",
+  widget_send_failed: "Message not sent. Check your connection.",
+  widget_retry: "Retry",
   widget_survey_title: "How was your experience?",
   survey_resolved_question: "Was your issue resolved?",
   widget_survey_yes: "✔ Yes",
@@ -38,7 +42,9 @@ const en: Translations = {
 
 const ja: Translations = {
   widget_placeholder: "メッセージを入力...",
-  widget_ended: "チャットが終了しました",
+  widget_ended: "チャットを終了する",
+  widget_send_failed: "送信できませんでした。通信状況をご確認ください。",
+  widget_retry: "再送する",
   widget_survey_title: "チャットはいかがでしたか？",
   survey_resolved_question: "問題は解決しましたか？",
   widget_survey_yes: "✔ はい",
@@ -51,7 +57,9 @@ const ja: Translations = {
 
 const zh: Translations = {
   widget_placeholder: "输入消息...",
-  widget_ended: "聊天已结束",
+  widget_ended: "结束聊天",
+  widget_send_failed: "消息未发送，请检查网络连接。",
+  widget_retry: "重新发送",
   widget_survey_title: "您的体验如何？",
   survey_resolved_question: "您的问题是否已解决？",
   widget_survey_yes: "✔ 是",
@@ -64,7 +72,9 @@ const zh: Translations = {
 
 const ko: Translations = {
   widget_placeholder: "메시지를 입력하세요...",
-  widget_ended: "채팅이 종료되었습니다",
+  widget_ended: "채팅 종료하기",
+  widget_send_failed: "전송하지 못했습니다. 연결 상태를 확인해 주세요.",
+  widget_retry: "다시 보내기",
   widget_survey_title: "경험이 어떠셨나요?",
   survey_resolved_question: "문제가 해결되었나요?",
   widget_survey_yes: "✔ 예",
@@ -77,7 +87,9 @@ const ko: Translations = {
 
 const th: Translations = {
   widget_placeholder: "พิมพ์ข้อความ...",
-  widget_ended: "แชทสิ้นสุดแล้ว",
+  widget_ended: "จบการสนทนา",
+  widget_send_failed: "ส่งข้อความไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ",
+  widget_retry: "ส่งอีกครั้ง",
   widget_survey_title: "ประสบการณ์ของคุณเป็นอย่างไร?",
   survey_resolved_question: "ปัญหาของคุณได้รับการแก้ไขหรือไม่?",
   widget_survey_yes: "✔ ใช่",
@@ -90,7 +102,9 @@ const th: Translations = {
 
 const vi: Translations = {
   widget_placeholder: "Nhập tin nhắn...",
-  widget_ended: "Chat đã kết thúc",
+  widget_ended: "Kết thúc trò chuyện",
+  widget_send_failed: "Chưa gửi được tin nhắn. Vui lòng kiểm tra kết nối.",
+  widget_retry: "Gửi lại",
   widget_survey_title: "Trải nghiệm của bạn như thế nào?",
   survey_resolved_question: "Vấn đề của bạn đã được giải quyết chưa?",
   widget_survey_yes: "✔ Có",

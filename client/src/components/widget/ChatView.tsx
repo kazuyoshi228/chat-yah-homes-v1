@@ -9,7 +9,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, Headphones, Send } from "lucide-react";
+import { Bot, Headphones, Send, Loader2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { ChatMessage } from "@/hooks/useChatMessages";
@@ -24,6 +24,9 @@ interface ChatViewProps {
 export function ChatView({ messages, typing, onSend, onEndSession }: ChatViewProps) {
   const { t, lang: language } = useLanguage();
   const [input, setInput] = useState("");
+  // 送信中／失敗の状態（無言の失敗を防ぐ: 電波の悪い部屋でも状況が分かるように）
+  const [sending, setSending] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // ── 自動スクロール ──
@@ -31,21 +34,29 @@ export function ChatView({ messages, typing, onSend, onEndSession }: ChatViewPro
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
 
-  const handleSend = useCallback(async () => {
-    const content = input.trim();
-    if (!content) return;
-    setInput("");
-    try {
-      await onSend(content);
-    } catch (error) {
-      console.error("[ChatView] メッセージ送信エラー:", error);
-    }
-  }, [input, onSend]);
+  const handleSend = useCallback(
+    async (retryText?: string) => {
+      const content = (retryText ?? input).trim();
+      if (!content || sending) return;
+      if (!retryText) setInput("");
+      setSending(true);
+      setFailed(null);
+      try {
+        await onSend(content);
+      } catch (error) {
+        console.error("[ChatView] メッセージ送信エラー:", error);
+        setFailed(content); // 本文を保持して再送できるようにする
+      } finally {
+        setSending(false);
+      }
+    },
+    [input, onSend, sending]
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      void handleSend();
     }
   };
 
@@ -126,6 +137,20 @@ export function ChatView({ messages, typing, onSend, onEndSession }: ChatViewPro
         </div>
       </ScrollArea>
 
+      {/* 送信失敗の通知（再送ボタン付き） */}
+      {failed && (
+        <div className="mx-3 mb-1 flex items-center justify-between gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 flex-shrink-0">
+          <p className="text-xs text-red-700">{t("widget_send_failed")}</p>
+          <button
+            onClick={() => void handleSend(failed)}
+            className="text-xs text-red-700 font-medium flex items-center gap-1 hover:underline flex-shrink-0"
+          >
+            <RotateCcw className="w-3 h-3" />
+            {t("widget_retry")}
+          </button>
+        </div>
+      )}
+
       {/* 入力エリア */}
       <div className="border-t border-gray-100 px-3 py-2 flex items-end gap-2 flex-shrink-0">
         <Textarea
@@ -137,11 +162,15 @@ export function ChatView({ messages, typing, onSend, onEndSession }: ChatViewPro
           className="flex-1 resize-none border-gray-200 focus:border-black focus:ring-black min-h-[36px] max-h-[80px] py-2 text-base"
         />
         <Button
-          onClick={handleSend}
-          disabled={!input.trim()}
+          onClick={() => void handleSend()}
+          disabled={!input.trim() || sending}
           className="bg-black hover:bg-gray-800 text-white rounded-full w-8 h-8 p-0 flex-shrink-0"
         >
-          <Send className="w-3.5 h-3.5" />
+          {sending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Send className="w-3.5 h-3.5" />
+          )}
         </Button>
       </div>
 
