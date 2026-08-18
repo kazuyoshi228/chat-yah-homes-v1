@@ -24,7 +24,7 @@ const SSOT_ROWS: { info: string; source: string; path: string }[] = [
 export default function AdminSsotMap() {
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">SSoTマップ</h1>
           <p className="text-sm text-muted-foreground mt-1">

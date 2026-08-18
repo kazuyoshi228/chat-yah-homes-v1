@@ -67,7 +67,7 @@ export default function AdminQr() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">QRコード</h1>
         </div>

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useIsMobile } from "@/hooks/useMobile";
-import { LogOut, PanelLeft, MessageCircle, BookOpen, Star, GitBranch, Target, ShieldCheck, Heart, Image, Map, QrCode } from "lucide-react";
+import { LogOut, PanelLeft, MessageCircle, BookOpen, Star, GitBranch, Target, ShieldCheck, Heart, Image, Map, QrCode, Building2 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -42,6 +42,7 @@ const DEFAULT_ADMIN_ITEMS: SidebarItem[] = [
   { title: "RAG Documents", href: "/admin/rag", icon: BookOpen },
   { title: "写真", href: "/admin/photos", icon: Image },
   { title: "QRコード", href: "/admin/qr", icon: QrCode },
+  { title: "施設", href: "/admin/facilities", icon: Building2 },
   { title: "SSoTマップ", href: "/admin/ssot-map", icon: Map },
   { title: "Feedback", href: "/admin/feedback", icon: Star },
   { title: "Flow Tree", href: "/admin/flow-tree", icon: GitBranch },

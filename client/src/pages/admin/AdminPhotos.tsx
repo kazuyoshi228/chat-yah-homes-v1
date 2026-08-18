@@ -95,7 +95,7 @@ export default function AdminPhotos() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">チャット用写真</h1>
         </div>
@@ -154,7 +154,7 @@ export default function AdminPhotos() {
             ) : photos.length === 0 ? (
               <p className="text-sm text-muted-foreground">まだ写真がありません</p>
             ) : (
-              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {photos.map((p) => (
                   <div key={p.id} className="border rounded-lg overflow-hidden">
                     <a href={p.url} target="_blank" rel="noopener noreferrer">
@@ -165,7 +165,7 @@ export default function AdminPhotos() {
                         className="w-full h-32 object-cover"
                       />
                     </a>
-                    <div className="p-2 space-y-1">
+                    <div className="p-3 space-y-1.5">
                       <p className="text-xs font-medium truncate">{p.label}</p>
                       <p className="text-[10px] text-muted-foreground">
                         {p.facilityId}

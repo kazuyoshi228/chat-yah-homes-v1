@@ -182,7 +182,7 @@ export default function HospitalityFirebase() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* ヘッダー */}
         <div className="flex items-center justify-between">
           <div>
@@ -254,14 +254,14 @@ export default function HospitalityFirebase() {
             <p>指針がありません</p>
           </div>
         ) : (
-          <div className="grid gap-2">
+          <div className="grid gap-4">
             {filtered.map((g) => {
               const inactive = g.isActive === false;
               return (
                 <div
                   key={g.id}
                   className={cn(
-                    "border rounded-lg p-3 transition-colors",
+                    "border rounded-xl p-5 transition-colors",
                     inactive ? "opacity-50 bg-gray-50" : "hover:border-black/20"
                   )}
                 >
