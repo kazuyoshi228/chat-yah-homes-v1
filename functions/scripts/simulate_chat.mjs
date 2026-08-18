@@ -33,10 +33,14 @@ const db = getFirestore(app, "chat");
 
 // ── 言語判定（応答言語の一致確認用） ──
 function detectLang(s) {
-  const t = (s || "").slice(0, 300);
-  if (/[぀-ゟ゠-ヿ]/.test(t)) return "ja";
-  if (/[가-힣]/.test(t)) return "ko";
+  // 🚨 中黒「・」(U+30FB) や長音「ー」(U+30FC) は Unicode 上カタカナ範囲だが、
+  //    多言語の箇条書きでも使われるため除去してから判定する
+  //    （除去しないと「・」入りのタイ語回答が日本語と誤判定される）
+  const t = (s || "").slice(0, 300).replace(/[・ー〜～]/g, "");
+  // タイ/韓国/ベトナム固有文字を先に判定（日本語の記号と衝突しない順序）
   if (/[฀-๿]/.test(t)) return "th";
+  if (/[가-힣]/.test(t)) return "ko";
+  if (/[぀-ゟ゠-ヿ]/.test(t)) return "ja";
   if (/[一-鿿]/.test(t)) return "zh";
   if (/[ăâđêôơưàảãáạằẳẵắặèẻẽéẹìỉĩíịòỏõóọùủũúụ]/i.test(t)) return "vi";
   if (/[a-zA-Z]/.test(t)) return "en";
