@@ -8,7 +8,7 @@
  * 🚨 施設追加はこのマスタへの登録＋施設RAG投入だけで完了する（コード変更不要）。
  *    スラッグをコードにハードコードしない。
  */
-import { chatDb } from "../db";
+import { chatDb, defaultDb } from "../db";
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const cache = new Map<string, { text: string; at: number }>();
@@ -97,14 +97,21 @@ export async function getFacilityContext(facilityId: string): Promise<string> {
     const f = snap.data() as FacilityDoc;
     if (f.isActive === false) return "";
 
+    /* 時刻・住所・地図・緊急電話は yah.homes 側 property_facts（既定DB）が正本。
+       chat_facilities に写しを持たない（2026-08-18 SSoT監査で二重化を解消）。 */
+    const pfSnap = await defaultDb.collection("property_facts").doc(facilityId).get();
+    const pf = (pfSnap.data() ?? {}) as Record<string, unknown>;
+    const metaSnap = await defaultDb.collection("property_facts").doc("meta").get();
+    const operatorPhone = String(metaSnap.data()?.operatorPhone ?? "");
+
     const lines: string[] = [
       `[Facility master data (single source of truth for this property)]`,
       `- Facility: ${fmtName(f.name)} (id: ${facilityId})`,
     ];
-    if (f.checkIn) lines.push(`- Check-in from: ${f.checkIn}`);
-    if (f.checkOut) lines.push(`- Check-out by: ${f.checkOut}`);
-    if (f.address) lines.push(`- Address: ${f.address}`);
-    if (f.mapUrl) lines.push(`- Map: ${f.mapUrl}`);
+    if (pf.checkinTime) lines.push(`- Check-in from: ${pf.checkinTime}`);
+    if (pf.checkoutTime) lines.push(`- Check-out by: ${pf.checkoutTime}`);
+    if (pf.addressJa) lines.push(`- Address: 〒${pf.zip ?? ""} ${pf.addressJa}`);
+    if (pf.mapUrl) lines.push(`- Map: ${pf.mapUrl}`);
     const c = f.contacts ?? {};
     const contactLines: string[] = [];
     if (c.bookingCom) contactLines.push(`  - Booked via Booking.com: ${c.bookingCom}`);
@@ -120,8 +127,8 @@ export async function getFacilityContext(facilityId: string): Promise<string> {
     if (contactLines.length > 0) {
       lines.push(`- Human contact channels (by booking channel):`, ...contactLines);
     }
-    if (f.emergencyPhone) {
-      lines.push(`- Facility emergency phone: ${f.emergencyPhone}`);
+    if (operatorPhone) {
+      lines.push(`- Facility emergency phone: ${operatorPhone}`);
     }
     const w = f.wifi ?? {};
     if (w.ssid24 || w.ssid5 || w.password) {
