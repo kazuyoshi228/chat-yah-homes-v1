@@ -34,15 +34,35 @@ export const notifyTranscripts = onSchedule(
     if (!settings.enabled) return; // トグルOFF
 
     const cutoff = admin.firestore.Timestamp.fromMillis(Date.now() - QUIET_MS);
-    const snap = await chatDb
+
+    // 通常: 最終メッセージから QUIET_MS 以上経過したセッション
+    const byLast = await chatDb
       .collection("chat_sessions")
       .where("lastMessageAt", "<", cutoff)
       .orderBy("lastMessageAt", "desc")
       .limit(100)
       .get();
 
+    // フォールバック: lastMessageAt を持たないセッション（この機能の導入前に開始したもの）。
+    //   Firestore は「フィールドが存在しない」条件で引けないため、createdAt で拾って
+    //   メモリ側で lastMessageAt 無しだけを対象にする。取りこぼし防止。
+    const byCreated = await chatDb
+      .collection("chat_sessions")
+      .where("createdAt", "<", cutoff)
+      .orderBy("createdAt", "desc")
+      .limit(50)
+      .get();
+
+    const docs = [
+      ...byLast.docs,
+      ...byCreated.docs.filter((d) => !d.data().lastMessageAt),
+    ];
+    const seen = new Set<string>();
+
     let sent = 0;
-    for (const doc of snap.docs) {
+    for (const doc of docs) {
+      if (seen.has(doc.id)) continue;
+      seen.add(doc.id);
       if (sent >= MAX_PER_RUN) break;
       const s = doc.data();
       if (s.notifiedAt) continue; // 送信済み
