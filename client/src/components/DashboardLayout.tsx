@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useIsMobile } from "@/hooks/useMobile";
-import { LogOut, PanelLeft, MessageCircle, BookOpen, Star, GitBranch, Target, ShieldCheck, Heart, Image, Map, QrCode, Building2 } from "lucide-react";
+import { LogOut, PanelLeft, MessageCircle, BookOpen, Star, GitBranch, Target, ShieldCheck, Heart, Image, Map, QrCode, Building2, Settings } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -47,6 +47,7 @@ const DEFAULT_ADMIN_ITEMS: SidebarItem[] = [
   // QRの正本は yah.homes の物件情報ページ（実体もそこ・2026-08-18 発注者承認）
   { title: "QRコード", href: "https://yah.homes/admin/properties/", icon: QrCode, external: true },
   { title: "SSoTマップ", href: "/admin/ssot-map", icon: Map },
+  { title: "設定", href: "/admin/settings", icon: Settings },
   { title: "Feedback", href: "/admin/feedback", icon: Star },
   { title: "Flow Tree", href: "/admin/flow-tree", icon: GitBranch },
   { title: "ホスピタリティ", href: "/admin/hospitality", icon: Heart },

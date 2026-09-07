@@ -31,6 +31,9 @@ import { checkBurstRateLimit, checkDailyRateLimit } from "../utils/rateLimits";
 import { getFacilityContext, getFacilityPhotos } from "../utils/facilityContext";
 import { getPropertyFacts } from "../utils/propertyFacts";
 import { classifyFailure } from "../utils/classifyFailure";
+import { getNotifySettings } from "../utils/notifySettings";
+import { buildTranscript } from "../utils/transcript";
+import { sendOpsMail, SMTP_USER, SMTP_PASS } from "../utils/mailer";
 import { REGION, MAX_MESSAGES_PER_SESSION } from "../config";
 
 /** レート制限時のシステム通知（未解決/エスカレーション扱いにしない） */
@@ -52,6 +55,7 @@ export const onVisitorMessageCreated = onDocumentCreated(
     region: REGION,
     memory: "512MiB",
     timeoutSeconds: 120,
+    secrets: [SMTP_USER, SMTP_PASS],
   },
   async (
     event: FirestoreEvent<QueryDocumentSnapshot | undefined, {
@@ -217,6 +221,11 @@ export const onVisitorMessageCreated = onDocumentCreated(
         console.error("chat_agent_logs 記録エラー:", logErr);
       }
 
+      // ── Step 6.7: 最終メッセージ時刻を記録（通知メールの静穏判定に使用） ──
+      await sessionRef.update({
+        lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
       // ── Step 7: エスカレーション判定 ──
       //   人間の窓口（予約経路のメッセージ・施設連絡先）へ誘導した（directToContact）
       //   or 未解決（resolved=false）＝エスカレーション。chat 側は escalated フラグを立てるだけ。
@@ -248,9 +257,29 @@ export const onVisitorMessageCreated = onDocumentCreated(
 async function handleEscalation(
   sessionRef: admin.firestore.DocumentReference
 ): Promise<void> {
+  const before = await sessionRef.get();
+  const wasEscalated = before.data()?.escalated === true;
+
   await sessionRef.update({
     escalated: true,
     escalationType: "human_contact", // 予約経路別の人間窓口へ誘導した、の意味
     escalatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
+
+  // 初回のエスカレーション時のみ即時アラート（同一会話で何度も送らない）。
+  // 送信失敗が本体フローを止めないよう独立 try/catch。
+  if (wasEscalated) return;
+  try {
+    const settings = await getNotifySettings();
+    if (!settings.escalationAlert) return;
+    const after = await sessionRef.get();
+    const { subject, text } = await buildTranscript(sessionRef.id, after.data() ?? {});
+    await sendOpsMail({
+      to: settings.recipient,
+      subject: `【要確認】${subject}`,
+      text: `AIが窓口へ誘導しました（対応が必要な可能性があります）。\n\n${text}`,
+    });
+  } catch (e) {
+    console.error("エスカレーション即時通知の送信に失敗:", e);
+  }
 }

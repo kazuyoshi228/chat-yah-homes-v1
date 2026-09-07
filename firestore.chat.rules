@@ -138,6 +138,11 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // ── 運用設定（通知メールのON/OFF等・管理画面のトグルから更新） ──
+    match /chat_settings/{id} {
+      allow read, write: if isAdmin();
+    }
+
     // ── チャット用写真メタデータ ──
     //   書き込みは管理者限定 callable（uploadChatPhoto/deleteChatPhoto・Admin SDK）経由のみ。
     //   訪問者は読まない（メッセージにURLが載る）。管理画面の一覧表示用に admin read のみ。
