@@ -7,8 +7,8 @@
  */
 import { useMemo, useRef, useState } from "react";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { orderBy } from "firebase/firestore";
-import { REGION, app } from "@/lib/firebase";
+import { orderBy, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { REGION, app, db } from "@/lib/firebase";
 import { useCollection } from "@/hooks/useFirestoreAdmin";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Trash2, Upload, Copy } from "lucide-react";
+import { Loader2, Trash2, Upload, Copy, Pencil, Check, X } from "lucide-react";
 
 const fns = getFunctions(app, REGION);
 const uploadFn = httpsCallable(fns, "uploadChatPhoto");
@@ -62,6 +62,9 @@ export default function AdminPhotos() {
   const [label, setLabel] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  // ラベルのインライン編集（AIの添付判断はラベルだけを見るため、後から直せるように）
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState("");
 
   const handleUpload = async () => {
     const file = fileRef.current?.files?.[0];
@@ -79,6 +82,22 @@ export default function AdminPhotos() {
       toast.error("アップロードに失敗しました");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleSaveLabel = async (p: PhotoDoc) => {
+    const v = editLabel.trim();
+    if (!v) return toast.error("ラベルを入力してください");
+    try {
+      await updateDoc(doc(db, "chat_photos", p.id), {
+        label: v,
+        updatedAt: serverTimestamp(),
+      });
+      toast.success("ラベルを更新しました（チャットには最大5分で反映）");
+      setEditingId(null);
+    } catch (e) {
+      console.error(e);
+      toast.error("更新に失敗しました");
     }
   };
 
@@ -166,7 +185,45 @@ export default function AdminPhotos() {
                       />
                     </a>
                     <div className="p-3 space-y-1.5">
-                      <p className="text-xs font-medium truncate">{p.label}</p>
+                      {editingId === p.id ? (
+                        <div className="flex items-start gap-1">
+                          <textarea
+                            value={editLabel}
+                            onChange={(e) => setEditLabel(e.target.value)}
+                            rows={3}
+                            className="flex-1 text-xs rounded-md border border-input bg-background px-2 py-1 resize-none"
+                            autoFocus
+                          />
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => handleSaveLabel(p)}
+                              title="保存"
+                              className="p-1 rounded hover:bg-gray-100"
+                            >
+                              <Check className="w-3.5 h-3.5 text-green-600" />
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              title="キャンセル"
+                              className="p-1 rounded hover:bg-gray-100"
+                            >
+                              <X className="w-3.5 h-3.5 text-gray-400" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingId(p.id);
+                            setEditLabel(p.label ?? "");
+                          }}
+                          title="クリックしてラベルを編集"
+                          className="text-xs font-medium text-left w-full line-clamp-3 hover:text-blue-600 flex items-start gap-1"
+                        >
+                          <span className="flex-1">{p.label}</span>
+                          <Pencil className="w-3 h-3 mt-0.5 flex-shrink-0 opacity-40" />
+                        </button>
+                      )}
                       <p className="text-[10px] text-muted-foreground">
                         {p.facilityId}
                         {p.sizeBytes ? ` · ${Math.round(p.sizeBytes / 1024)}KB` : ""}
